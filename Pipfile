@@ -8,6 +8,10 @@ flask = "*"
 gunicorn = "*"
 
 [dev-packages]
+flake8 = "*"
+coverage = "*"
+tox = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.8"
