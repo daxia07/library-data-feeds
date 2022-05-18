@@ -1,0 +1,6 @@
+include *.lock
+include *.yml
+include Dockerfile
+include Pipfile
+exclude tox.ini
+exclude .dockerignore
