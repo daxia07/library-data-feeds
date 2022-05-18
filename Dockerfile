@@ -20,6 +20,7 @@ RUN apt update && apt install -y --no-install-recommends gcc
 
 COPY . .
 RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
+RUN python setup.py install
 
 EXPOSE 5000
-CMD gunicorn -b 0.0.0.0:$PORT --chdir /app/src gateway.wsgi:app
+CMD gunicorn -b 0.0.0.0:$PORT gateway.wsgi:app
