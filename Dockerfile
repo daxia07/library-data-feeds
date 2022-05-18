@@ -22,4 +22,4 @@ COPY . .
 RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
 
 EXPOSE 5000
-CMD gunicorn -b 0.0.0.0:$PORT wsgi:app
+CMD gunicorn -b 0.0.0.0:$PORT --chdir /app/src gateway.wsgi:app
