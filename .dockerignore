@@ -1,1 +1,3 @@
 .venv
+.tox
+.pytest_cache

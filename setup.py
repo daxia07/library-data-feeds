@@ -30,6 +30,7 @@ setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3 :: Only",
     ],
+    url="https://github.com/daxia07/library-data-feeds",
     keywords="books, library, reviews",  # Optional
     package_dir={"": "src"},  # Optional
     packages=find_packages(where="src"),  # Required

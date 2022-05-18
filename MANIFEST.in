@@ -3,4 +3,4 @@ include *.yml
 include Dockerfile
 include Pipfile
 exclude tox.ini
-exclude .dockerignore
+include .dockerignore
