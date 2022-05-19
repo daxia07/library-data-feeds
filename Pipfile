@@ -6,6 +6,8 @@ name = "pypi"
 [packages]
 flask = "*"
 gunicorn = "*"
+scrapy = "*"
+python-dotenv = "*"
 
 [dev-packages]
 flake8 = "*"

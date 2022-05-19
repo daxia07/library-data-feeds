@@ -1,8 +1,9 @@
-def add_one(number):
-    return number + 1
+import os
+
+
+def get_name():
+    return os.environ.get('APP_NAME')
 
 
 def main():
-    import socket
-    ip_addr = socket.gethostbyname('www.google.com')
-    print(ip_addr)
+    print(get_name())

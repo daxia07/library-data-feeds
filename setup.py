@@ -10,7 +10,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 setup(
     name="library-data-feeds",  # Required
     # Versions should comply with PEP 440:
-    version="0.0.1",  # Required
+    version="0.0.2",  # Required
     description="A sample Python project",  # Optional
     long_description=long_description,  # Optional
     long_description_content_type="text/markdown",  # Optional (see note above)
@@ -37,7 +37,8 @@ setup(
     python_requires=">=3.8, <4",
     install_requires=[
         "Flask==2.1.2",
-        "gunicorn==20.1.0"
+        "gunicorn==20.1.0",
+        "python-dotenv==0.20.0"
     ],
     extras_require={  # Optional
         "dev": ["check-manifest"],
