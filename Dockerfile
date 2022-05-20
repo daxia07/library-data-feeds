@@ -17,6 +17,7 @@ RUN pip install pipenv
 #COPY --from=python-deps /.venv /.venv
 ENV PATH="/app/.venv/bin:$PATH"
 RUN apt update && apt install -y --no-install-recommends gcc
+RUN apt install -y docker
 
 COPY . .
 RUN PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
