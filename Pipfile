@@ -8,6 +8,7 @@ flask = "*"
 gunicorn = "*"
 scrapy = "*"
 python-dotenv = "*"
+scrapy-splash = "*"
 
 [dev-packages]
 flake8 = "*"
