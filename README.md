@@ -1,3 +1,9 @@
+### Library backend services
+
+### Pre-requests
+1. Create splash instance to log in with JS on heroku
+2. Define URL
+
 ### Backend container app 
 
 ### Commands
