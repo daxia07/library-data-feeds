@@ -6,6 +6,7 @@ try:
 except IOError:
     pass
 
+READER = os.environ.get("READER")
 ACCOUNTS = [i.split(":") for i in os.environ.get("ACCOUNTS").split(" ")]
 START_URL = os.environ.get("START_URL")
 ACCOUNT_URL = START_URL.replace('mylists', 'account')
@@ -115,8 +116,8 @@ SETTINGS = {
     },
     "DUPEFILTER_CLASS": 'scrapy_splash.SplashAwareDupeFilter',
     "HTTPCACHE_STORAGE": 'scrapy_splash.SplashAwareFSCacheStorage',
-    "SPLASH_COOKIES_DEBUG": True
+    # "SPLASH_COOKIES_DEBUG": True
 }
 
 
-__all__ = ['ACCOUNTS', 'START_URL', 'ACCOUNT_URL', 'BROWSER', 'LOGIN_SCRIPT', 'EVAL_JS_SCRIPT', 'SETTINGS', ]
+__all__ = ['READER', 'ACCOUNTS', 'START_URL', 'ACCOUNT_URL', 'BROWSER', 'LOGIN_SCRIPT', 'EVAL_JS_SCRIPT', 'SETTINGS', ]
