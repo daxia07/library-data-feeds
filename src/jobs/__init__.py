@@ -117,6 +117,7 @@ SETTINGS = {
     },
     "DUPEFILTER_CLASS": 'scrapy_splash.SplashAwareDupeFilter',
     "HTTPCACHE_STORAGE": 'scrapy_splash.SplashAwareFSCacheStorage',
+    'RETRY_TIMES': 5,
     # "SPLASH_COOKIES_DEBUG": True
 }
 

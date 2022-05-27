@@ -8,6 +8,23 @@ from scrapy import Item, Field
 from scrapy.loader import ItemLoader
 from itemloaders.processors import Join, MapCompose, TakeFirst
 import time
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
+from scrapy.utils.response import response_status_message
+
+
+class CustomRetryMiddleware(RetryMiddleware):
+
+    def process_response(self, request, response, spider):
+        if request.meta.get('dont_retry', False):
+            return response
+        if response.status in self.retry_http_codes:
+            reason = response_status_message(response.status)
+            return self._retry(request, reason, spider) or response
+
+        # assert that title should show up in the page
+        if response.status == 200 and not response.xpath(spider.retry_xpath):
+            return self._retry(request, 'response got xpath "{}"'.format(spider.retry_xpath), spider) or response
+        return response
 
 
 class CheckoutItem(Item):
@@ -37,6 +54,7 @@ class CheckoutSpider(scrapy.Spider):
     username, password, nickname = ACCOUNTS[0]
     active_user = nickname
     retry_item = dict()
+    retry_xpath = '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title'
 
     def start_requests(self):
         script = LOGIN_SCRIPT.replace('$username', self.username)\
@@ -52,6 +70,7 @@ class CheckoutSpider(scrapy.Spider):
                 },
                 cache_args=['lua_source'],
                 headers={'X-My-Header': 'value'},
+                meta={'dont_retry': True},
             )
 
     def parse(self, response, **kwargs):
@@ -107,7 +126,8 @@ class CheckoutSpider(scrapy.Spider):
 
 
 if __name__ == '__main__':
-    # add item pipelines from local file
+    dl_middleware = SETTINGS['DOWNLOADER_MIDDLEWARES']
+    dl_middleware['__main__.CustomRetryMiddleware'] = 550
     process = CrawlerProcess(settings={**SETTINGS,
                                        "ITEM_PIPELINES": {
                                            '__main__.JsonWriterPipeline': 100
