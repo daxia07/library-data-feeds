@@ -1,11 +1,13 @@
 import json
 import scrapy
 from scrapy_splash import SplashRequest
-from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
+from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT,\
+    BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER, DELAY
 from scrapy.crawler import CrawlerProcess
 from scrapy import Item, Field
 from scrapy.loader import ItemLoader
-from scrapy.loader.processors import Join, MapCompose, TakeFirst
+from itemloaders.processors import Join, MapCompose, TakeFirst
+import time
 
 
 class CheckoutItem(Item):
@@ -15,12 +17,6 @@ class CheckoutItem(Item):
     author = Field()
     reader = Field()
     account = Field()
-
-
-class CheckoutItemLoader(ItemLoader):
-    default_input_processor = MapCompose(str.strip)
-    default_output_processor = TakeFirst()
-    desc_out = Join()
 
 
 class JsonWriterPipeline:
@@ -35,11 +31,12 @@ class JsonWriterPipeline:
 
 class CheckoutSpider(scrapy.Spider):
 
+    name = 'checkout'
     start_urls = [START_URL]
     # TODO: use different user and switch active user
     username, password, nickname = ACCOUNTS[0]
-    name = 'checkout'
     active_user = nickname
+    retry_item = dict()
 
     def start_requests(self):
         script = LOGIN_SCRIPT.replace('$username', self.username)\
@@ -69,8 +66,10 @@ class CheckoutSpider(scrapy.Spider):
         for idx in range(len(links)):
             # item to parse
             # click_id = href.xpath('@id').get()
-            # book_name = href.xpath('text()').get()
+            book_name = links[idx].xpath('text()').get()
+            self.logger.info(f'Fetching data for {book_name}')
             # print(book_name)
+            time.sleep(DELAY)
             yield SplashRequest(
                 ACCOUNT_URL,
                 self.parse_checkout,
@@ -79,7 +78,9 @@ class CheckoutSpider(scrapy.Spider):
                     'lua_source': EVAL_JS_SCRIPT,
                     'ua': BROWSER,
                     # 'line': "console.log('Hi)"
-                    'line': f"""document.querySelectorAll(".myCheckouts td.checkoutsBookInfo a")[{idx}].click()"""
+                    'line': f"""document.querySelectorAll(".myCheckouts td.checkoutsBookInfo a")[{idx}].click()""",
+                    'book': book_name,
+                    'idx_id': idx
                 },
                 cache_args=['lua_source'],
                 headers={'X-My-Header': 'value'},
@@ -92,7 +93,10 @@ class CheckoutSpider(scrapy.Spider):
 
     def parse_checkout(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
-        loader = CheckoutItemLoader(CheckoutItem(), selector=tab, response=response)
+        loader = ItemLoader(CheckoutItem(), selector=tab, response=response)
+        loader.default_input_processor = MapCompose(str.strip)
+        loader.default_output_processor = TakeFirst()
+        loader.desc_out = Join()
         loader.add_xpath('cover', '//div[@class= "detail_main"]//img/@src')
         loader.add_xpath('title', '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title')
         loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
@@ -111,4 +115,3 @@ if __name__ == '__main__':
     process.crawl(CheckoutSpider)
     process.start()
     # process.stop()
-
