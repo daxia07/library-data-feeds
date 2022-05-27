@@ -7,7 +7,6 @@ from scrapy.crawler import CrawlerProcess
 from scrapy import Item, Field
 from scrapy.loader import ItemLoader
 from itemloaders.processors import Join, MapCompose, TakeFirst
-import time
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
 from scrapy.utils.response import response_status_message
 
@@ -88,7 +87,6 @@ class CheckoutSpider(scrapy.Spider):
             book_name = links[idx].xpath('text()').get()
             self.logger.info(f'Fetching data for {book_name}')
             # print(book_name)
-            time.sleep(DELAY)
             yield SplashRequest(
                 ACCOUNT_URL,
                 self.parse_checkout,

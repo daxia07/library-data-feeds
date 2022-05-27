@@ -118,7 +118,11 @@ SETTINGS = {
     "DUPEFILTER_CLASS": 'scrapy_splash.SplashAwareDupeFilter',
     "HTTPCACHE_STORAGE": 'scrapy_splash.SplashAwareFSCacheStorage',
     'RETRY_TIMES': 5,
+    # "DOWNLOAD_DELAY": 2,
+    "AUTOTHROTTLE_ENABLED": True,
+    # "AUTOTHROTTLE_START_DELAY": 2,
     # "SPLASH_COOKIES_DEBUG": True
+    "AUTOTHROTTLE_TARGET_CONCURRENCY": 3
 }
 
 
