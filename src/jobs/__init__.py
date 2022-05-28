@@ -111,6 +111,7 @@ SETTINGS = {
         'scrapy_splash.SplashCookiesMiddleware': 723,
         'scrapy_splash.SplashMiddleware': 725,
         'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+        'jobs.utils.CustomRetryMiddleware': 550,
     },
     "SPIDER_MIDDLEWARES": {
         'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,

@@ -137,7 +137,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# other modules
 .idea
 .tox
 .pytest_cache
 .creds/
+*.jl

@@ -2,28 +2,11 @@ import json
 import scrapy
 from scrapy_splash import SplashRequest
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT,\
-    BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER, DELAY
+    BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
 from scrapy.crawler import CrawlerProcess
 from scrapy import Item, Field
 from scrapy.loader import ItemLoader
 from itemloaders.processors import Join, MapCompose, TakeFirst
-from scrapy.downloadermiddlewares.retry import RetryMiddleware
-from scrapy.utils.response import response_status_message
-
-
-class CustomRetryMiddleware(RetryMiddleware):
-
-    def process_response(self, request, response, spider):
-        if request.meta.get('dont_retry', False):
-            return response
-        if response.status in self.retry_http_codes:
-            reason = response_status_message(response.status)
-            return self._retry(request, reason, spider) or response
-
-        # assert that title should show up in the page
-        if response.status == 200 and not response.xpath(spider.retry_xpath):
-            return self._retry(request, 'response got xpath "{}"'.format(spider.retry_xpath), spider) or response
-        return response
 
 
 class CheckoutItem(Item):
@@ -49,15 +32,10 @@ class CheckoutSpider(scrapy.Spider):
 
     name = 'checkout'
     start_urls = [START_URL]
-    # TODO: use different user and switch active user
-    username, password, nickname = ACCOUNTS[0]
-    active_user = nickname
-    retry_item = dict()
-    retry_xpath = '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title'
 
     def start_requests(self):
-        script = LOGIN_SCRIPT.replace('$username', self.username)\
-            .replace('$password', self.password)
+        script = LOGIN_SCRIPT.replace('$username', self.__getattribute__('username'))\
+            .replace('$password', self.__getattribute__('password'))
         for url in self.start_urls:
             yield SplashRequest(
                 url,
@@ -69,7 +47,7 @@ class CheckoutSpider(scrapy.Spider):
                 },
                 cache_args=['lua_source'],
                 headers={'X-My-Header': 'value'},
-                meta={'dont_retry': True},
+                meta={'expect_xpath': '//*[@id="libInfoContainer"]/span[contains(@class, "welcome")]'},
             )
 
     def parse(self, response, **kwargs):
@@ -96,11 +74,10 @@ class CheckoutSpider(scrapy.Spider):
                     'ua': BROWSER,
                     # 'line': "console.log('Hi)"
                     'line': f"""document.querySelectorAll(".myCheckouts td.checkoutsBookInfo a")[{idx}].click()""",
-                    'book': book_name,
-                    'idx_id': idx
                 },
                 cache_args=['lua_source'],
                 headers={'X-My-Header': 'value'},
+                meta={'expect_xpath': '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title'}
             )
 
         # if next page, follow next page
@@ -119,17 +96,17 @@ class CheckoutSpider(scrapy.Spider):
         loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
         loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
         loader.add_value('reader', READER)
-        loader.add_value('account', self.nickname)
+        loader.add_value('account', self.__getattribute__('nickname'))
         yield loader.load_item()
 
 
 if __name__ == '__main__':
-    dl_middleware = SETTINGS['DOWNLOADER_MIDDLEWARES']
-    dl_middleware['__main__.CustomRetryMiddleware'] = 550
     process = CrawlerProcess(settings={**SETTINGS,
                                        "ITEM_PIPELINES": {
                                            '__main__.JsonWriterPipeline': 100
                                        }})
-    process.crawl(CheckoutSpider)
+    # TODO: use different user and switch active user
+    username, password, nickname = ACCOUNTS[0]
+    process.crawl(CheckoutSpider, username=username, password=password, nickname=nickname)
     process.start()
     # process.stop()
