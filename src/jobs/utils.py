@@ -1,6 +1,8 @@
 import json
 
+from itemloaders.processors import MapCompose, TakeFirst, Join
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
+from scrapy.loader import ItemLoader
 from scrapy.utils.response import response_status_message
 from scrapy_splash import SplashRequest
 from jobs import BROWSER
@@ -55,3 +57,9 @@ class JsonWriterPipeline:
         line = json.dumps(dict(item)) + "\n"
         self.file.write(line)
         return item
+
+
+class DefaultItemLoader(ItemLoader):
+    default_input_processor = MapCompose(str.strip)
+    default_output_processor = TakeFirst()
+    desc_out = Join()
