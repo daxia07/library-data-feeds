@@ -40,7 +40,6 @@ db.books.createIndex(
 );
 db.checkouts.createIndex(
   {
-      "reader": 1,
       "account": 1,
       "isbn": 1
   },
@@ -50,10 +49,18 @@ db.checkouts.createIndex(
 );
 db.history.createIndex(
   {
-      "reader": 1,
       "account": 1,
       "isbn": 1,
-      "returned": 1,
+      "returned": 1
+  },
+  {
+      unique: true,
+  }
+);
+db.holds.createIndex(
+  {
+      "account": 1,
+      "isbn": 1
   },
   {
       unique: true,
