@@ -22,7 +22,7 @@ heroku logs --tail --app pd-lib-api
 ```
 
 ### Setup database
-```bash
+```javascript
 db.createCollection('books');
 db.createCollection('checkouts');
 db.createCollection('explore');
@@ -30,4 +30,35 @@ db.createCollection('history');
 db.createCollection('holds');
 db.createCollection('requests');
 db.createCollection('reviews');
+db.books.createIndex(
+  {
+      "isbn": 1
+  },
+  {
+      unique: true,
+  }
+);
+db.checkouts.createIndex(
+  {
+      "reader": 1,
+      "account": 1,
+      "isbn": 1
+  },
+  {
+      unique: true,
+  }
+);
+db.history.createIndex(
+  {
+      "reader": 1,
+      "account": 1,
+      "isbn": 1,
+      "returned": 1,
+  },
+  {
+      unique: true,
+  }
+);
+
+
 ```

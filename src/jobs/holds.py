@@ -11,6 +11,7 @@ class HoldsItem(BookItem):
     location = scrapy.Field()
     expire_date = scrapy.Field()
     rank = scrapy.Field()
+    media = scrapy.Field()
 
 
 class HoldsSpider(scrapy.Spider):
@@ -67,6 +68,10 @@ class HoldsSpider(scrapy.Spider):
         loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
         loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
         loader.add_value('account', self.__getattribute__('nickname'))
+        if loader.get_value('isbn'):
+            loader.add_value('media', 'book')
+        else:
+            loader.add_value('media', 'CD')
         data = response.request.meta.get('data')
         loader.add_value('reader', READER)
         for k in data.keys():

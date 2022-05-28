@@ -60,11 +60,15 @@ class ReturnedSpider(scrapy.Spider):
         loader = DefaultItemLoader(ReturnedItem(), selector=tab, response=response)
         loader.add_xpath('cover', '//div[@class="detail_main"]//img/@src')
         loader.add_xpath('title', '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title')
-        loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
         loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
         loader.add_value('account', self.__getattribute__('nickname'))
         loader.add_value('reader', READER)
-        media = 'book' if loader.get_value('title') else 'CD'
+        if loader.get_value('isbn'):
+            media = 'book'
+            loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
+        else:
+            media = 'CD'
+            loader.add_value('isbn', loader.get_value('title'))
         loader.add_value('media', media)
         data = response.request.meta.get('data')
         for k in data.keys():
