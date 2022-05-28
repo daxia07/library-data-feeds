@@ -25,7 +25,7 @@ LOGIN_SCRIPT = """
               var selector = '%s';
               var maxwait = %s;
               var end = Date.now() + maxwait*1000;
-        
+             
               function check() {
                 if(document.querySelector(selector)) {
                   splash.resume('Element found');
@@ -40,8 +40,7 @@ LOGIN_SCRIPT = """
             }
           ]], css, maxwait))
         end
-         
-        
+
         function main(splash)
             splash:init_cookies(splash.args.cookies)
             assert(splash:go{
@@ -57,7 +56,7 @@ LOGIN_SCRIPT = """
             splash:set_viewport_full()
             assert(splash:wait(1))
             wait_for_element(splash, "a.loginLink")
-            local search_input = splash:select('input[name=j_username]')   
+            local search_input = splash:select('input[name=j_username]')
             search_input:send_text("$username")
             local search_input = splash:select('input[name=j_password]')
             search_input:send_text("$password")

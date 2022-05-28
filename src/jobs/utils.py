@@ -21,13 +21,10 @@ class CustomRetryMiddleware(RetryMiddleware):
         if response.status == 200:
             if request.meta.get('expect_xpath', False) and not response.xpath(request.meta.get('expect_xpath')):
                 return self._retry(request, 'response did not have xpath "{}"'
-                                   .format(request.meta.get('expect_xpath')), spider)\
-                       or response
+                                   .format(request.meta.get('expect_xpath')), spider) or response
             if request.meta.get('unexpect_xpath', False) and response.xpath(request.meta.get('unexpect_xpath')):
                 return self._retry(request, 'response did not have xpath "{}"'
-                                   .format(request.meta.get('unexpect_xpath')), spider) \
-                   or response
-
+                                   .format(request.meta.get('unexpect_xpath')), spider) or response
         return response
 
 
