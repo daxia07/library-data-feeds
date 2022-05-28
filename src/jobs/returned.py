@@ -13,7 +13,7 @@ class ReturnedItem(BookItem):
 
 
 class ReturnedSpider(scrapy.Spider):
-    name = 'returned'
+    name = 'history'
     start_urls = [START_URL]
     custom_settings = {
         'ITEM_PIPELINES': {

@@ -14,7 +14,7 @@ class HoldsItem(BookItem):
 
 
 class HoldsSpider(scrapy.Spider):
-    name = 'hold'
+    name = 'holds'
     start_urls = [START_URL]
     custom_settings = {
         'ITEM_PIPELINES': {

@@ -20,3 +20,14 @@ heroku container:push web --app pd-lib-api
 heroku container:release web --app pd-lib-api
 heroku logs --tail --app pd-lib-api
 ```
+
+### Setup database
+```bash
+db.createCollection('books');
+db.createCollection('checkouts');
+db.createCollection('explore');
+db.createCollection('history');
+db.createCollection('holds');
+db.createCollection('requests');
+db.createCollection('reviews');
+```

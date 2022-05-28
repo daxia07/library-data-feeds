@@ -12,7 +12,7 @@ class CheckoutItem(BookItem):
 
 
 class CheckoutSpider(scrapy.Spider):
-    name = 'checkout'
+    name = 'checkouts'
     start_urls = [START_URL]
     custom_settings = {
         'ITEM_PIPELINES': {
