@@ -1,5 +1,7 @@
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
 from scrapy.utils.response import response_status_message
+from scrapy_splash import SplashRequest
+from jobs import BROWSER
 
 
 class CustomRetryMiddleware(RetryMiddleware):
@@ -23,3 +25,21 @@ class CustomRetryMiddleware(RetryMiddleware):
                    or response
 
         return response
+
+
+def login(login_script, username, password, urls, callback):
+    script = login_script.replace('$username', username) \
+        .replace('$password', password)
+    for url in urls:
+        yield SplashRequest(
+            url,
+            callback,
+            endpoint='execute',
+            args={
+                'lua_source': script,
+                'ua': BROWSER
+            },
+            cache_args=['lua_source'],
+            headers={'X-My-Header': 'value'},
+            meta={'expect_xpath': '//*[@id="libInfoContainer"]/span[contains(@class, "welcome")]'},
+        )
