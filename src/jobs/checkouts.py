@@ -34,21 +34,11 @@ class CheckoutSpider(scrapy.Spider):
     start_urls = [START_URL]
 
     def start_requests(self):
-        script = LOGIN_SCRIPT.replace('$username', self.__getattribute__('username'))\
-            .replace('$password', self.__getattribute__('password'))
-        for url in self.start_urls:
-            yield SplashRequest(
-                url,
-                self.parse,
-                endpoint='execute',
-                args={
-                    'lua_source': script,
-                    'ua': BROWSER
-                },
-                cache_args=['lua_source'],
-                headers={'X-My-Header': 'value'},
-                meta={'expect_xpath': '//*[@id="libInfoContainer"]/span[contains(@class, "welcome")]'},
-            )
+        from jobs.utils import login
+        for req in login(LOGIN_SCRIPT, self.__getattribute__('username'),
+                         self.__getattribute__('password'),
+                         self.start_urls, self.parse):
+            yield req
 
     def parse(self, response, **kwargs):
         # 1. find all element and loop over each item
