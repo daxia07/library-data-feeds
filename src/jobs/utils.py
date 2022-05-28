@@ -1,6 +1,6 @@
 import json
-
 from itemloaders.processors import MapCompose, TakeFirst, Join
+from scrapy import Item, Field
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
 from scrapy.loader import ItemLoader
 from scrapy.utils.response import response_status_message
@@ -63,3 +63,12 @@ class DefaultItemLoader(ItemLoader):
     default_input_processor = MapCompose(str.strip)
     default_output_processor = TakeFirst()
     desc_out = Join()
+
+
+class BookItem(Item):
+    title = Field()
+    cover = Field()
+    isbn = Field()
+    author = Field()
+    account = Field()
+    reader = Field()

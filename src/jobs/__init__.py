@@ -6,8 +6,8 @@ try:
 except IOError:
     pass
 
+RENEW_DURATION = 21
 READER = os.environ.get("READER")
-DELAY = int(os.environ.get("DELAY", "10"))
 ACCOUNTS = [i.split(":") for i in os.environ.get("ACCOUNTS").split(" ")]
 START_URL = os.environ.get("START_URL")
 ACCOUNT_URL = START_URL.replace('mylists', 'account')
@@ -128,4 +128,5 @@ SETTINGS = {
 
 
 __all__ = ['READER', 'ACCOUNTS', 'START_URL', 'ACCOUNT_URL', 'BROWSER',
-           'LOGIN_SCRIPT', 'EVAL_JS_SCRIPT', 'SETTINGS', 'DELAY', ]
+           'LOGIN_SCRIPT', 'EVAL_JS_SCRIPT', 'SETTINGS',
+           'RENEW_DURATION']
