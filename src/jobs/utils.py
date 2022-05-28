@@ -1,3 +1,5 @@
+import json
+
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
 from scrapy.utils.response import response_status_message
 from scrapy_splash import SplashRequest
@@ -43,3 +45,13 @@ def login(login_script, username, password, urls, callback):
             headers={'X-My-Header': 'value'},
             meta={'expect_xpath': '//*[@id="libInfoContainer"]/span[contains(@class, "welcome")]'},
         )
+
+
+class JsonWriterPipeline:
+    def __init__(self):
+        self.file = open('items.jl', 'w')
+
+    def process_item(self, item, spider):
+        line = json.dumps(dict(item)) + "\n"
+        self.file.write(line)
+        return item

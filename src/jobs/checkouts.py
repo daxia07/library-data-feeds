@@ -1,4 +1,3 @@
-import json
 import scrapy
 from scrapy_splash import SplashRequest
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT,\
@@ -18,20 +17,15 @@ class CheckoutItem(Item):
     account = Field()
 
 
-class JsonWriterPipeline:
-    def __init__(self):
-        self.file = open('items.jl', 'w')
-
-    def process_item(self, item, spider):
-        line = json.dumps(dict(item)) + "\n"
-        self.file.write(line)
-        return item
-
-
 class CheckoutSpider(scrapy.Spider):
 
     name = 'checkout'
     start_urls = [START_URL]
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'jobs.utils.JsonWriterPipeline': 100
+        }
+    }
 
     def start_requests(self):
         from jobs.utils import login
@@ -91,10 +85,7 @@ class CheckoutSpider(scrapy.Spider):
 
 
 if __name__ == '__main__':
-    process = CrawlerProcess(settings={**SETTINGS,
-                                       "ITEM_PIPELINES": {
-                                           '__main__.JsonWriterPipeline': 100
-                                       }})
+    process = CrawlerProcess(settings=SETTINGS)
     # TODO: use different user and switch active user
     username, password, nickname = ACCOUNTS[0]
     process.crawl(CheckoutSpider, username=username, password=password, nickname=nickname)
