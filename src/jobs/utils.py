@@ -45,8 +45,14 @@ def login(login_script, username, password, urls, callback):
         )
 
 
+def input_processor(line):
+    if isinstance(line, str):
+        return line.strip()
+    return line
+
+
 class DefaultItemLoader(ItemLoader):
-    default_input_processor = MapCompose(str.strip)
+    default_input_processor = MapCompose(input_processor)
     default_output_processor = TakeFirst()
     desc_out = Join()
 

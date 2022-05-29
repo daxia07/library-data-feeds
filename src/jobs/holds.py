@@ -4,12 +4,14 @@ from scrapy.crawler import CrawlerProcess
 from jobs.utils import DefaultItemLoader, login, BookItem
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
+from datetime import datetime
 
 
 class HoldsItem(BookItem):
     status = scrapy.Field()
     location = scrapy.Field()
     expire_date = scrapy.Field()
+    pickup_date = scrapy.Field()
     rank = scrapy.Field()
     media = scrapy.Field()
 
@@ -68,12 +70,18 @@ class HoldsSpider(scrapy.Spider):
         loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
         loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
         loader.add_value('account', self.__getattribute__('nickname'))
+        loader.add_value('reader', READER)
         if loader.get_output_value('isbn'):
             loader.add_value('media', 'book')
         else:
             loader.add_value('media', 'CD')
         data = response.request.meta.get('data')
-        loader.add_value('reader', READER)
+        expire_date = datetime.strptime(data['expire_date'], '%d/%m/%y')
+        data['expire_date'] = expire_date
+        if 'Pickup by' in data['status']:
+            pickup_date = datetime.strptime(data['status'].replace('Pickup by', '').strip(),
+                                            '%d/%m/%y')
+            data['pickup_date'] = pickup_date
         for k in data.keys():
             loader.add_value(k, data[k])
         yield loader.load_item()
