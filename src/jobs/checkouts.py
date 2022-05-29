@@ -1,13 +1,13 @@
 import scrapy
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BookItem, load_concise_book
+from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
 from datetime import datetime
 
 
-class CheckoutItem(BookItem):
+class CheckoutItem(BaseItem):
     renewed = scrapy.Field()
     due_date = scrapy.Field()
 
@@ -42,7 +42,7 @@ class CheckoutSpider(scrapy.Spider):
             data = {'renewed': int(renewed), 'due_date': due_date}
             yield SplashRequest(
                 ACCOUNT_URL,
-                self.parse_checkout,
+                self.parse_detail,
                 endpoint='execute',
                 args={
                     'lua_source': EVAL_JS_SCRIPT,
@@ -56,7 +56,7 @@ class CheckoutSpider(scrapy.Spider):
                       }
             )
 
-    def parse_checkout(self, response):
+    def parse_detail(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
         loader = DefaultItemLoader(CheckoutItem(), selector=tab, response=response)
         loader.add_value('account', self.__getattribute__('nickname'))

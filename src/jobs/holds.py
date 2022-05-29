@@ -1,13 +1,13 @@
 import scrapy
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BookItem, load_concise_book
+from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
 from datetime import datetime
 
 
-class HoldsItem(BookItem):
+class HoldsItem(BaseItem):
     status = scrapy.Field()
     location = scrapy.Field()
     expire_date = scrapy.Field()
@@ -48,7 +48,7 @@ class HoldsSpider(scrapy.Spider):
                     'expire_date': expire_date, 'rank': rank}
             yield SplashRequest(
                 ACCOUNT_URL,
-                self.parse_checkout,
+                self.parse_detail,
                 endpoint='execute',
                 args={
                     'lua_source': EVAL_JS_SCRIPT,
@@ -62,7 +62,7 @@ class HoldsSpider(scrapy.Spider):
                       }
             )
 
-    def parse_checkout(self, response):
+    def parse_detail(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
         loader = DefaultItemLoader(HoldsItem(), selector=tab, response=response)
         load_concise_book(loader)

@@ -1,21 +1,23 @@
-from datetime import datetime
-
 import scrapy
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book
+from jobs.utils import DefaultItemLoader, login, BaseItem, load_detail_book
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
-    BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
+    BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL
+from datetime import datetime
 
 
-class ReturnedItem(BaseItem):
-    checked_out = scrapy.Field()
-    returned = scrapy.Field()
+class BooksItem(BaseItem):
+    status = scrapy.Field()
+    location = scrapy.Field()
+    expire_date = scrapy.Field()
+    pickup_date = scrapy.Field()
+    rank = scrapy.Field()
     media = scrapy.Field()
 
 
-class ReturnedSpider(scrapy.Spider):
-    name = 'history'
+class BooksSpider(scrapy.Spider):
+    name = 'books'
     start_urls = [START_URL]
     custom_settings = {
         'ITEM_PIPELINES': {
@@ -30,16 +32,19 @@ class ReturnedSpider(scrapy.Spider):
             yield req
 
     def parse(self, response, **kwargs):
-        row_path = '//table[contains(@class, "checkoutsHistoryList")]//tr[@class="checkoutsHistoryLine"]'
+        row_path = '//table[contains(@class, "holdsList")]//tr[@class="pickupHoldsLine"]'
         rows = response.xpath(row_path)
         if not rows:
             return
         for idx in range(len(rows)):
             # fetch each item and attach data to the request meta
             # item to parse
-            checked_out = rows[idx].xpath('.//td[3]/text()').get()
-            returned = rows[idx].xpath('.//td[4]/text()').get()
-            data = {'checked_out': checked_out, 'returned': returned}
+            status = rows[idx].xpath('.//td[@class="holdsStatus"]/text()').get()
+            location = rows[idx].xpath('.//td[@class="holdsPickup"]/text()').get()
+            expire_date = rows[idx].xpath('.//td[@class="holdsDate"]/text()').get()
+            rank = rows[idx].xpath('.//td[@class="holdsRank"]/text()').get()
+            data = {'status': status, 'location': location,
+                    'expire_date': expire_date, 'rank': rank}
             yield SplashRequest(
                 ACCOUNT_URL,
                 self.parse_detail,
@@ -47,8 +52,7 @@ class ReturnedSpider(scrapy.Spider):
                 args={
                     'lua_source': EVAL_JS_SCRIPT,
                     'ua': BROWSER,
-                    'line': """document.querySelectorAll("table.checkoutsHistoryList tr.checkoutsHistoryLine a")"""
-                            f"""[{idx}].click()""",
+                    'line': f"""document.querySelectorAll("table.holdsList td.holdsID a")[{idx}].click()""",
                 },
                 cache_args=['lua_source'],
                 headers={'X-My-Header': 'value'},
@@ -58,24 +62,20 @@ class ReturnedSpider(scrapy.Spider):
             )
 
     def parse_detail(self, response):
-        tab = response.xpath('//div[@class="detail_main"]')
-        loader = DefaultItemLoader(ReturnedItem(), selector=tab, response=response)
-        loader.add_value('account', self.__getattribute__('nickname'))
-        loader.add_value('reader', READER)
-        load_concise_book(loader)
+        tab = response.xpath('//div[@class= "detail_main"]')
+        loader = DefaultItemLoader(BooksItem(), selector=tab, response=response)
+        load_detail_book(loader)
         if loader.get_output_value('isbn'):
-            media = 'book'
-            loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
+            loader.add_value('media', 'book')
         else:
-            media = 'CD'
-            loader.add_value('isbn', loader.get_output_value('title'))
-        loader.add_value('media', media)
+            loader.add_value('media', 'CD')
         data = response.request.meta.get('data')
-        # reformat checked_out and returned
-        checked_out = datetime.strptime(data['checked_out'].strip(), '%d/%m/%y')
-        returned = datetime.strptime(data['returned'].strip(), '%d/%m/%y')
-        data['checked_out'] = checked_out
-        data['returned'] = returned
+        expire_date = datetime.strptime(data['expire_date'].strip(), '%d/%m/%y')
+        data['expire_date'] = expire_date
+        if 'Pickup by' in data['status']:
+            pickup_date = datetime.strptime(data['status'].strip().replace('Pickup by', '').strip(),
+                                            '%d/%m/%y')
+            data['pickup_date'] = pickup_date
         for k in data.keys():
             loader.add_value(k, data[k])
         yield loader.load_item()
@@ -85,5 +85,5 @@ if __name__ == '__main__':
     process = CrawlerProcess(settings=SETTINGS)
     # TODO: use different user and switch active user
     username, password, nickname = ACCOUNTS[0]
-    process.crawl(ReturnedSpider, username=username, password=password, nickname=nickname)
+    process.crawl(BooksSpider, username=username, password=password, nickname=nickname)
     process.start()

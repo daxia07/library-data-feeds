@@ -57,7 +57,7 @@ class DefaultItemLoader(ItemLoader):
     desc_out = Join()
 
 
-class BookItem(Item):
+class BaseItem(Item):
     title = Field()
     cover = Field()
     isbn = Field()
@@ -71,3 +71,7 @@ def load_concise_book(loader):
     loader.add_xpath('title', '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title')
     loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
     loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
+
+
+def load_detail_book(loader):
+    load_concise_book(loader)
