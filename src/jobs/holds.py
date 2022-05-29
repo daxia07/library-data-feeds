@@ -1,10 +1,10 @@
 import scrapy
+from itemloaders.processors import MapCompose
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book
+from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book, convert_date
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
-from datetime import datetime
 
 
 class HoldsItem(BaseItem):
@@ -14,6 +14,12 @@ class HoldsItem(BaseItem):
     pickup_date = scrapy.Field()
     rank = scrapy.Field()
     media = scrapy.Field()
+
+
+class HoldsItemLoader(DefaultItemLoader):
+    expire_date_in = MapCompose(convert_date)
+    pick_up_date = MapCompose(lambda x: x.lstrip('Pickup by').strip(), convert_date)
+    rank_in = MapCompose(int)
 
 
 class HoldsSpider(scrapy.Spider):
@@ -64,7 +70,7 @@ class HoldsSpider(scrapy.Spider):
 
     def parse_detail(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
-        loader = DefaultItemLoader(HoldsItem(), selector=tab, response=response)
+        loader = HoldsItemLoader(HoldsItem(), selector=tab, response=response)
         load_concise_book(loader)
         loader.add_value('account', self.__getattribute__('nickname'))
         loader.add_value('reader', READER)
@@ -73,12 +79,6 @@ class HoldsSpider(scrapy.Spider):
         else:
             loader.add_value('media', 'CD')
         data = response.request.meta.get('data')
-        expire_date = datetime.strptime(data['expire_date'].strip(), '%d/%m/%y')
-        data['expire_date'] = expire_date
-        if 'Pickup by' in data['status']:
-            pickup_date = datetime.strptime(data['status'].strip().replace('Pickup by', '').strip(),
-                                            '%d/%m/%y')
-            data['pickup_date'] = pickup_date
         for k in data.keys():
             loader.add_value(k, data[k])
         yield loader.load_item()

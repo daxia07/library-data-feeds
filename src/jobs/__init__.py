@@ -12,6 +12,7 @@ MONGO_URL = os.environ.get("MONGO_URI")
 MONGO_DB = os.environ.get("MONGO_DB")
 ACCOUNTS = [i.split(":") for i in os.environ.get("ACCOUNTS").split(" ")]
 START_URL = os.environ.get("START_URL")
+BOOK_URL = os.environ.get("BOOK_URL")
 ACCOUNT_URL = START_URL.replace('mylists', 'account')
 BROWSER = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36"
 LOGIN_SCRIPT = """
@@ -70,6 +71,11 @@ LOGIN_SCRIPT = """
             assert(splash:wait(2))
             splash:runjs('document.querySelector("a.loginLink").click()')
             assert(splash:wait(5))
+            local next_page = splash.args.next_page
+            if (next_page ~= nil and next_page ~= '') then
+                assert(splash:go(next_page))
+                assert(splash:wait(5))
+            end
             local entries = splash:history()
             local last_response = entries[#entries].response
             return {
@@ -130,4 +136,4 @@ SETTINGS = {
 
 __all__ = ['READER', 'ACCOUNTS', 'START_URL', 'ACCOUNT_URL', 'BROWSER',
            'LOGIN_SCRIPT', 'EVAL_JS_SCRIPT', 'SETTINGS',
-           'RENEW_DURATION', 'MONGO_URL', 'MONGO_DB', ]
+           'RENEW_DURATION', 'MONGO_URL', 'MONGO_DB', 'BOOK_URL', ]

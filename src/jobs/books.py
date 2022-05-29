@@ -1,19 +1,33 @@
 import scrapy
+from itemloaders.processors import MapCompose
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
 from jobs.utils import DefaultItemLoader, login, BaseItem, load_detail_book
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
-    BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL
-from datetime import datetime
+    BROWSER, SETTINGS, EVAL_JS_SCRIPT, BOOK_URL
 
 
 class BooksItem(BaseItem):
-    status = scrapy.Field()
-    location = scrapy.Field()
-    expire_date = scrapy.Field()
-    pickup_date = scrapy.Field()
-    rank = scrapy.Field()
-    media = scrapy.Field()
+    language = scrapy.Field()
+    publication = scrapy.Field()
+    physical = scrapy.Field()
+    series = scrapy.Field()
+    abstract = scrapy.Field()
+    subject_term = scrapy.Field()
+    contents = scrapy.Field()
+    genre_term = scrapy.Field()
+    added_title = scrapy.Field()
+    general_note = scrapy.Field()
+    added_author = scrapy.Field()
+    available_num = scrapy.Field()
+    summary = scrapy.Field()
+
+
+class BooksItemLoader(DefaultItemLoader):
+    subject_term_out = MapCompose(lambda x: x)
+    genre_term_out = MapCompose(lambda x: x)
+    available_num_in = MapCompose(int)
+    summary_out = MapCompose(lambda x: x.rstrip(' (read less)'))
 
 
 class BooksSpider(scrapy.Spider):
@@ -24,60 +38,60 @@ class BooksSpider(scrapy.Spider):
             'jobs.pipelines.DBPipeline': 100
         }
     }
+    # elements_per_page = 12
+    # TODO: set it to max
+    max_page = 2
+    current_page = 1
 
     def start_requests(self):
         for req in login(LOGIN_SCRIPT, self.__getattribute__('username'),
                          self.__getattribute__('password'),
-                         self.start_urls, self.parse):
+                         self.start_urls, self.parse,
+                         next_page=BOOK_URL):
             yield req
 
     def parse(self, response, **kwargs):
-        row_path = '//table[contains(@class, "holdsList")]//tr[@class="pickupHoldsLine"]'
-        rows = response.xpath(row_path)
+        rows = response.xpath('//div[@class="displayDetailLink"]/a')
         if not rows:
             return
         for idx in range(len(rows)):
-            # fetch each item and attach data to the request meta
-            # item to parse
-            status = rows[idx].xpath('.//td[@class="holdsStatus"]/text()').get()
-            location = rows[idx].xpath('.//td[@class="holdsPickup"]/text()').get()
-            expire_date = rows[idx].xpath('.//td[@class="holdsDate"]/text()').get()
-            rank = rows[idx].xpath('.//td[@class="holdsRank"]/text()').get()
-            data = {'status': status, 'location': location,
-                    'expire_date': expire_date, 'rank': rank}
             yield SplashRequest(
-                ACCOUNT_URL,
+                response.url,
                 self.parse_detail,
                 endpoint='execute',
                 args={
                     'lua_source': EVAL_JS_SCRIPT,
                     'ua': BROWSER,
-                    'line': f"""document.querySelectorAll("table.holdsList td.holdsID a")[{idx}].click()""",
+                    'line': f"""document.querySelectorAll("div.displayDetailLink a")[{idx}].click()""",
                 },
                 cache_args=['lua_source'],
                 headers={'X-My-Header': 'value'},
-                meta={'expect_xpath': '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title',
-                      'data': data
-                      }
+                meta={'expect_xpath': '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title'}
             )
+        # if next page exists follow it
+        next_page = response.xpath('//a[@id="NextPageBottom"]').extract()
+        if next_page:
+            # next page to parse
+            self.current_page += 1
+            if self.current_page <= self.max_page:
+                yield SplashRequest(
+                    response.url,
+                    self.parse,
+                    endpoint='execute',
+                    args={
+                        'lua_source': EVAL_JS_SCRIPT,
+                        'ua': BROWSER,
+                        'line': f"""document.querySelectorAll("a#NextPageBottom")[0].click()""",
+                    },
+                    cache_args=['lua_source'],
+                    headers={'X-My-Header': 'value'},
+                    meta={'expect_xpath': '//div[@id="resultsWrapper"]'}
+                )
 
     def parse_detail(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
-        loader = DefaultItemLoader(BooksItem(), selector=tab, response=response)
+        loader = BooksItemLoader(BooksItem(), selector=tab, response=response)
         load_detail_book(loader)
-        if loader.get_output_value('isbn'):
-            loader.add_value('media', 'book')
-        else:
-            loader.add_value('media', 'CD')
-        data = response.request.meta.get('data')
-        expire_date = datetime.strptime(data['expire_date'].strip(), '%d/%m/%y')
-        data['expire_date'] = expire_date
-        if 'Pickup by' in data['status']:
-            pickup_date = datetime.strptime(data['status'].strip().replace('Pickup by', '').strip(),
-                                            '%d/%m/%y')
-            data['pickup_date'] = pickup_date
-        for k in data.keys():
-            loader.add_value(k, data[k])
         yield loader.load_item()
 
 

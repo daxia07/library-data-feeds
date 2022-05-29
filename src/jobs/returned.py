@@ -1,9 +1,10 @@
 from datetime import datetime
 
 import scrapy
+from itemloaders.processors import MapCompose
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book
+from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book, convert_date
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
 
@@ -12,6 +13,11 @@ class ReturnedItem(BaseItem):
     checked_out = scrapy.Field()
     returned = scrapy.Field()
     media = scrapy.Field()
+
+
+class ReturnedItemLoader(DefaultItemLoader):
+    checked_out_in = MapCompose(convert_date)
+    returned_in = MapCompose(convert_date)
 
 
 class ReturnedSpider(scrapy.Spider):
@@ -59,7 +65,7 @@ class ReturnedSpider(scrapy.Spider):
 
     def parse_detail(self, response):
         tab = response.xpath('//div[@class="detail_main"]')
-        loader = DefaultItemLoader(ReturnedItem(), selector=tab, response=response)
+        loader = ReturnedItemLoader(ReturnedItem(), selector=tab, response=response)
         loader.add_value('account', self.__getattribute__('nickname'))
         loader.add_value('reader', READER)
         load_concise_book(loader)
@@ -71,11 +77,6 @@ class ReturnedSpider(scrapy.Spider):
             loader.add_value('isbn', loader.get_output_value('title'))
         loader.add_value('media', media)
         data = response.request.meta.get('data')
-        # reformat checked_out and returned
-        checked_out = datetime.strptime(data['checked_out'].strip(), '%d/%m/%y')
-        returned = datetime.strptime(data['returned'].strip(), '%d/%m/%y')
-        data['checked_out'] = checked_out
-        data['returned'] = returned
         for k in data.keys():
             loader.add_value(k, data[k])
         yield loader.load_item()

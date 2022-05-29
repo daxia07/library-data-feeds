@@ -1,15 +1,20 @@
 import scrapy
+from itemloaders.processors import MapCompose
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book
+from jobs.utils import DefaultItemLoader, login, BaseItem, load_concise_book, convert_date
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
-from datetime import datetime
 
 
 class CheckoutItem(BaseItem):
     renewed = scrapy.Field()
     due_date = scrapy.Field()
+
+
+class CheckoutItemLoader(DefaultItemLoader):
+    renewed_in = MapCompose(int)
+    due_date_in = MapCompose(convert_date)
 
 
 class CheckoutSpider(scrapy.Spider):
@@ -58,16 +63,11 @@ class CheckoutSpider(scrapy.Spider):
 
     def parse_detail(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
-        loader = DefaultItemLoader(CheckoutItem(), selector=tab, response=response)
+        loader = CheckoutItemLoader(CheckoutItem(), selector=tab, response=response)
         loader.add_value('account', self.__getattribute__('nickname'))
         loader.add_value('reader', READER)
         load_concise_book(loader)
         data = response.request.meta.get('data')
-        try:
-            due_date = datetime.strptime(data['due_date'].strip(), '%d/%m/%y %H:%M %p')
-        except ValueError:
-            due_date = datetime.strptime(data['due_date'].strip(), '%d/%m/%y')
-        data['due_date'] = due_date
         for k in data.keys():
             loader.add_value(k, data[k])
         yield loader.load_item()
