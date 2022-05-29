@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-
 import pymongo
 from itemadapter import ItemAdapter
 from scrapy.exceptions import DropItem
@@ -18,6 +17,7 @@ class DBPipeline:
         self.client = None
         self.unique_keys = []
         self.total = 0
+        self.start_time = datetime.utcnow()
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -40,7 +40,8 @@ class DBPipeline:
         # do clean up accordingly
         if self.collection in ['holds', 'checkouts']:
             # remove items that are not found in this process
-            pass
+            self.mongo_db[self.collection].delete_many(
+                {"last_modified": {"$lt": self.start_time}})
         self.client.close()
 
     def process_item(self, item, spider):
