@@ -1,9 +1,10 @@
 import scrapy
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BookItem
+from jobs.utils import DefaultItemLoader, login, BookItem, load_concise_book
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
+from datetime import datetime
 
 
 class CheckoutItem(BookItem):
@@ -38,7 +39,7 @@ class CheckoutSpider(scrapy.Spider):
         for idx in range(len(rows)):
             renewed = rows[idx].xpath('.//td[@class="checkoutsRenewCount"]/text()').get()
             due_date = rows[idx].xpath('.//td[@class="checkoutsDueDate"]/text()').get()
-            data = {'renewed': renewed, 'due_date': due_date}
+            data = {'renewed': int(renewed), 'due_date': due_date}
             yield SplashRequest(
                 ACCOUNT_URL,
                 self.parse_checkout,
@@ -58,13 +59,15 @@ class CheckoutSpider(scrapy.Spider):
     def parse_checkout(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
         loader = DefaultItemLoader(CheckoutItem(), selector=tab, response=response)
-        loader.add_xpath('cover', '//div[@class= "detail_main"]//img/@src')
-        loader.add_xpath('title', '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title')
-        loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
-        loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
-        loader.add_value('reader', READER)
         loader.add_value('account', self.__getattribute__('nickname'))
+        loader.add_value('reader', READER)
+        load_concise_book(loader)
         data = response.request.meta.get('data')
+        try:
+            due_date = datetime.strptime(data['due_date'].strip(), '%d/%m/%y %H:%M %p')
+        except ValueError:
+            due_date = datetime.strptime(data['due_date'].strip(), '%d/%m/%y')
+        data['due_date'] = due_date
         for k in data.keys():
             loader.add_value(k, data[k])
         yield loader.load_item()

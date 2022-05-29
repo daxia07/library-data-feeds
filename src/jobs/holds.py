@@ -1,7 +1,7 @@
 import scrapy
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BookItem
+from jobs.utils import DefaultItemLoader, login, BookItem, load_concise_book
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
 from datetime import datetime
@@ -65,10 +65,7 @@ class HoldsSpider(scrapy.Spider):
     def parse_checkout(self, response):
         tab = response.xpath('//div[@class= "detail_main"]')
         loader = DefaultItemLoader(HoldsItem(), selector=tab, response=response)
-        loader.add_xpath('cover', '//div[@class= "detail_main"]//img/@src')
-        loader.add_xpath('title', '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title')
-        loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
-        loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
+        load_concise_book(loader)
         loader.add_value('account', self.__getattribute__('nickname'))
         loader.add_value('reader', READER)
         if loader.get_output_value('isbn'):
@@ -76,10 +73,10 @@ class HoldsSpider(scrapy.Spider):
         else:
             loader.add_value('media', 'CD')
         data = response.request.meta.get('data')
-        expire_date = datetime.strptime(data['expire_date'], '%d/%m/%y')
+        expire_date = datetime.strptime(data['expire_date'].strip(), '%d/%m/%y')
         data['expire_date'] = expire_date
         if 'Pickup by' in data['status']:
-            pickup_date = datetime.strptime(data['status'].replace('Pickup by', '').strip(),
+            pickup_date = datetime.strptime(data['status'].strip().replace('Pickup by', '').strip(),
                                             '%d/%m/%y')
             data['pickup_date'] = pickup_date
         for k in data.keys():

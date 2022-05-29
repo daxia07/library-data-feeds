@@ -1,7 +1,9 @@
+from datetime import datetime
+
 import scrapy
 from scrapy_splash import SplashRequest
 from scrapy.crawler import CrawlerProcess
-from jobs.utils import DefaultItemLoader, login, BookItem
+from jobs.utils import DefaultItemLoader, login, BookItem, load_concise_book
 from jobs import START_URL, ACCOUNTS, LOGIN_SCRIPT, \
     BROWSER, SETTINGS, EVAL_JS_SCRIPT, ACCOUNT_URL, READER
 
@@ -58,12 +60,9 @@ class ReturnedSpider(scrapy.Spider):
     def parse_checkout(self, response):
         tab = response.xpath('//div[@class="detail_main"]')
         loader = DefaultItemLoader(ReturnedItem(), selector=tab, response=response)
-        loader.add_xpath('cover', '//div[@class="detail_main"]//img/@src')
-        loader.add_xpath('title', '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title')
-        loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
         loader.add_value('account', self.__getattribute__('nickname'))
         loader.add_value('reader', READER)
-        loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
+        load_concise_book(loader)
         if loader.get_output_value('isbn'):
             media = 'book'
             loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
@@ -72,6 +71,11 @@ class ReturnedSpider(scrapy.Spider):
             loader.add_value('isbn', loader.get_output_value('title'))
         loader.add_value('media', media)
         data = response.request.meta.get('data')
+        # reformat checked_out and returned
+        checked_out = datetime.strptime(data['checked_out'].strip(), '%d/%m/%y')
+        returned = datetime.strptime(data['returned'].strip(), '%d/%m/%y')
+        data['checked_out'] = checked_out
+        data['returned'] = returned
         for k in data.keys():
             loader.add_value(k, data[k])
         yield loader.load_item()

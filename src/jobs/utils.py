@@ -65,3 +65,9 @@ class BookItem(Item):
     account = Field()
     reader = Field()
 
+
+def load_concise_book(loader):
+    loader.add_xpath('cover', '//div[@class="detail_main"]//img/@src')
+    loader.add_xpath('title', '//div[contains(@class, "text-p INITIAL_TITLE_SRCH")]/a/@title')
+    loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
+    loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
