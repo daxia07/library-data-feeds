@@ -16,7 +16,7 @@ class CheckoutSpider(scrapy.Spider):
     start_urls = [START_URL]
     custom_settings = {
         'ITEM_PIPELINES': {
-            'jobs.utils.DBPipeline': 100
+            'jobs.pipelines.DBPipeline': 100
         }
     }
 
