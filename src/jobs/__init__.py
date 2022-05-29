@@ -8,6 +8,8 @@ except IOError:
 
 RENEW_DURATION = 21
 READER = os.environ.get("READER")
+MONGO_URL = os.environ.get("MONGO_URI")
+MONGO_DB = os.environ.get("MONGO_DB")
 ACCOUNTS = [i.split(":") for i in os.environ.get("ACCOUNTS").split(" ")]
 START_URL = os.environ.get("START_URL")
 ACCOUNT_URL = START_URL.replace('mylists', 'account')
@@ -128,4 +130,4 @@ SETTINGS = {
 
 __all__ = ['READER', 'ACCOUNTS', 'START_URL', 'ACCOUNT_URL', 'BROWSER',
            'LOGIN_SCRIPT', 'EVAL_JS_SCRIPT', 'SETTINGS',
-           'RENEW_DURATION']
+           'RENEW_DURATION', 'MONGO_URL', 'MONGO_DB', ]

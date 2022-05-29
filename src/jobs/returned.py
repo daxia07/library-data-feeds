@@ -17,7 +17,7 @@ class ReturnedSpider(scrapy.Spider):
     start_urls = [START_URL]
     custom_settings = {
         'ITEM_PIPELINES': {
-            'jobs.utils.JsonWriterPipeline': 100
+            'jobs.utils.DBPipeline': 100
         }
     }
 
@@ -63,12 +63,13 @@ class ReturnedSpider(scrapy.Spider):
         loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
         loader.add_value('account', self.__getattribute__('nickname'))
         loader.add_value('reader', READER)
-        if loader.get_value('isbn'):
+        loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
+        if loader.get_output_value('isbn'):
             media = 'book'
             loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
         else:
             media = 'CD'
-            loader.add_value('isbn', loader.get_value('title'))
+            loader.add_value('isbn', loader.get_output_value('title'))
         loader.add_value('media', media)
         data = response.request.meta.get('data')
         for k in data.keys():

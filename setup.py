@@ -40,7 +40,8 @@ setup(
         "gunicorn==20.1.0",
         "python-dotenv==0.20.0",
         "Scrapy==2.6.1",
-        "scrapy-splash==0.8.0"
+        "scrapy-splash==0.8.0",
+        "pymongo[srv]==4.1.1"
     ],
     extras_require={  # Optional
         "dev": ["check-manifest"],

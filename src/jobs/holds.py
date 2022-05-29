@@ -19,7 +19,7 @@ class HoldsSpider(scrapy.Spider):
     start_urls = [START_URL]
     custom_settings = {
         'ITEM_PIPELINES': {
-            'jobs.utils.JsonWriterPipeline': 100
+            'jobs.utils.DBPipeline': 100
         }
     }
 
@@ -68,7 +68,7 @@ class HoldsSpider(scrapy.Spider):
         loader.add_xpath('isbn', '//div[contains(@class, "text-p ISBN")]/text()')
         loader.add_xpath('author', '//div[contains(@class, "text-p PERSONAL_AUTHOR")]/a/@title')
         loader.add_value('account', self.__getattribute__('nickname'))
-        if loader.get_value('isbn'):
+        if loader.get_output_value('isbn'):
             loader.add_value('media', 'book')
         else:
             loader.add_value('media', 'CD')
