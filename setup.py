@@ -10,7 +10,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 setup(
     name="library-data-feeds",  # Required
     # Versions should comply with PEP 440:
-    version="0.2",  # Required
+    version="0.3",  # Required
     description="A sample Python project",  # Optional
     long_description=long_description,  # Optional
     long_description_content_type="text/markdown",  # Optional (see note above)

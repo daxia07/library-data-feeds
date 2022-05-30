@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import scrapy
 from itemloaders.processors import MapCompose
 from scrapy_splash import SplashRequest

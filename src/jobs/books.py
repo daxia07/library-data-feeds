@@ -83,14 +83,15 @@ class BooksSpider(scrapy.Spider):
                     args={
                         'lua_source': EVAL_JS_SCRIPT,
                         'ua': BROWSER,
-                        'line': f"""document.querySelectorAll("a#NextPageBottom")[0].click()""",
+                        'line': """document.querySelectorAll("a#NextPageBottom")[0].click()""",
                     },
                     cache_args=['lua_source'],
                     headers={'X-My-Header': 'value'},
                     meta={'expect_xpath': '//div[@id="resultsWrapper"]'}
                 )
 
-    def parse_detail(self, response):
+    @staticmethod
+    def parse_detail(response):
         tab = response.xpath('//div[@class= "detail_main"]')
         loader = BooksItemLoader(BooksItem(), selector=tab, response=response)
         load_detail_book(loader)
