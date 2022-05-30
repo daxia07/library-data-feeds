@@ -67,5 +67,9 @@ db.holds.createIndex(
   }
 );
 
-
 ```
+### TODOS
+1. Main function to loop over different accounts
+2. Deploy to VM
+3. Fix splash crash in between
+4. Resume from failure

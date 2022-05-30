@@ -38,10 +38,12 @@ class BooksSpider(scrapy.Spider):
             'jobs.pipelines.DBPipeline': 100
         }
     }
-    # elements_per_page = 12
-    # TODO: set it to max
-    max_page = 2
-    current_page = 1
+    # limit max number of pages
+    max_page = 500
+
+    def __init__(self, *args, **kwargs):
+        super(BooksSpider, self).__init__(*args, **kwargs)
+        self.current_page = 1
 
     def start_requests(self):
         for req in login(LOGIN_SCRIPT, self.__getattribute__('username'),
